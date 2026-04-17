@@ -25,7 +25,7 @@ class DREAMUV_OT_uv_move_to_edge(bpy.types.Operator):
         for face in bm.faces:
             if face.select:
                 for l in face.loops:
-                    if l[bm.loops.layers.uv.active].select:
+                    if l.uv_select_vert:
                         if first:
                             xmin = l[bm.loops.layers.uv.active].uv.x
                             xmax = l[bm.loops.layers.uv.active].uv.x
@@ -58,7 +58,7 @@ class DREAMUV_OT_uv_move_to_edge(bpy.types.Operator):
         for face in bm.faces:
                 if face.select:
                     for l in face.loops:
-                        if l[bm.loops.layers.uv.active].select:
+                        if l.uv_select_vert:
                             l[bm.loops.layers.uv.active].uv.x += xdist
                             l[bm.loops.layers.uv.active].uv.y += ydist
 

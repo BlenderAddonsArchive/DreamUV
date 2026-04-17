@@ -1,8 +1,6 @@
 bl_info = {
-    "name": "HotSpotter",
+    "name": "UVPROJECT",
     "category": "3D View",
-    "author": "brame@valvesoftware.com",
-    "description": "Adds source 2 Utilities to the scene properties tab",
     "blender": (2, 80, 0)
     }
 

@@ -1,5 +1,6 @@
 import bpy
 import bmesh
+import math
 from math import degrees
 from math import radians
 from mathutils import Vector
@@ -145,12 +146,14 @@ def main(context):
                     loop[uv_layer].uv.x /= (xmax-xmin)
                     loop[uv_layer].uv.y /= (zmax-zmin)
 
-
     bmesh.update_edit_mesh(obj.data)
     
     if objectmode is True:
         print("switch to object mode")
         bpy.ops.object.editmode_toggle() 
+    
+    #normalize islands:
+    DUV_Utils.normalize_islands(context)
 
 class DREAMUV_OT_uv_boxmap(bpy.types.Operator):
     """Unwrap using a box shape"""
@@ -173,3 +176,4 @@ class DREAMUV_OT_uv_boxmap(bpy.types.Operator):
         bpy.context.view_layer.objects.active.data.uv_layers.active_index = uv_index
 
         return {'FINISHED'}
+        

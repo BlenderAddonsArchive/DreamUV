@@ -364,8 +364,12 @@ def uv_cap(context):
     print("atlas:")
     print(atlas)
     
-    if context.scene.cap_index > ( len(atlas) - 1.0 ):
-        context.scene.cap_index = 0.0
+    if len(atlas) == 0:
+        return {'FINISHED'}
+        
+    
+    if context.scene.cap_index > ( len(atlas) - 1 ):
+        context.scene.cap_index = 0
     
     #check if horizontal or vertical, and make trimsheet
 
@@ -404,7 +408,7 @@ def uv_cap(context):
     if (ymax - ymin) == 0:
         ymin = .1
     
-    trimindex = int(context.scene.cap_index)        
+    trimindex = int(context.scene.cap_index)      
     print("move uv to this:")
     print(atlas[trimindex].xmin)
     print(atlas[trimindex].ymin)
@@ -651,7 +655,13 @@ class DREAMUV_OT_uv_trimnext(bpy.types.Operator):
 
 def uv_capnext(self, context): 
     atlas = read_trim_atlas(context, "cap")
+    
+    if len(atlas) == 0:
+        return {'FINISHED'}
+    
     trimindex = int(context.scene.cap_index)
+    
+    
     
     if self.trimswitched == False:
         if self.reverse == False:

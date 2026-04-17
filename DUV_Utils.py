@@ -155,9 +155,167 @@ def get_orientation(context):
                 loop[uv_layer].uv.y = newy
 
     return None
-    
+   
 
 
+
+   
+def normalize_islands(context):
+
+    #make sure active object is actually selected in edit mode:
+    if bpy.context.object.mode == 'EDIT':
+        bpy.context.object.select_set(True)
+        
+            
+    #check for object or edit mode:
+    objectmode = False
+    if bpy.context.object.mode == 'OBJECT':
+        objectmode = True
+        print("switch to edit mode")
+        #switch to edit and select all
+        bpy.ops.object.editmode_toggle() 
+        bpy.ops.mesh.select_all(action='SELECT')
+
+
+    obj = bpy.context.view_layer.objects.active
+    bm = bmesh.from_edit_mesh(obj.data)
+
+    #remember selection
+    selected_faces = list()
+    for face in bm.faces:
+        if face.select:
+            selected_faces.append(face)
+
+    #MOVE islands close to the origin
+    #list islands
+    #iterate using select linked uv
+
+    islands = list()        
+    tempfaces = list()
+    updatedfaces = list()
+    #MAKE FACE LIST
+    for face in bm.faces:
+        if face.select:
+            updatedfaces.append(face)
+            tempfaces.append(face)
+            face.select = False
+            
+
+    while len(tempfaces) > 0:
+
+        updatedfaces[0].select = True
+
+        bmesh.update_edit_mesh(obj.data)
+        bpy.ops.mesh.select_mode(use_extend=False, use_expand=False, type='FACE')
+        bpy.ops.mesh.select_linked(delimit={'UV'})
+        obj = bpy.context.view_layer.objects.active
+        bm = bmesh.from_edit_mesh(obj.data)
+
+        islandfaces = list()
+        for face in bm.faces:
+            if face.select:
+                islandfaces.append(face)
+
+        islands.append(islandfaces)
+
+        #create updated list
+        tempfaces.clear()
+        for face in updatedfaces:
+            if face.select == False:
+                tempfaces.append(face)
+            else:
+                face.select = False 
+        #make new list into updated list
+        updatedfaces.clear()
+        updatedfaces = tempfaces.copy()
+
+    print("MADE ISLANDS!")
+    print(islands)
+    print(len(islands))
+
+    for island in islands:
+        #now lets shift the island
+        #steps:
+        #1 calculate bounds
+        #2 for u, if over 1 or under -1: shift
+        #3 for v, if over 1 or under -1: shift
+        #4 done
+            
+        xmin,xmax,ymin,ymax=0,0,0,0
+
+        first = True
+            
+        for face in island:
+            for l in face.loops:
+                if first:
+                    xmin = l[bm.loops.layers.uv.active].uv.x
+                    xmax = l[bm.loops.layers.uv.active].uv.x
+                    ymin = l[bm.loops.layers.uv.active].uv.y
+                    ymax = l[bm.loops.layers.uv.active].uv.y
+                    first=False
+                else:
+                    if l[bm.loops.layers.uv.active].uv.x < xmin:
+                        xmin = l[bm.loops.layers.uv.active].uv.x
+                    elif l[bm.loops.layers.uv.active].uv.x > xmax:
+                        xmax = l[bm.loops.layers.uv.active].uv.x
+                    if l[bm.loops.layers.uv.active].uv.y < ymin:
+                        ymin = l[bm.loops.layers.uv.active].uv.y
+                    elif l[bm.loops.layers.uv.active].uv.y > ymax:
+                        ymax = l[bm.loops.layers.uv.active].uv.y
+            
+        print("extents")
+        print(xmin)
+        print(xmax)
+        print(ymin)
+        print(ymax)
+            
+        if xmin and xmax > 1.0:
+            #shift back
+            offset = math.floor((xmax+xmin)/2)
+            print(offset)
+            for face in island:    
+                for l in face.loops:
+                    l[bm.loops.layers.uv.active].uv.x -= offset
+        
+        if xmin and xmax < 0.0:
+            #shift back
+            offset = math.floor(-((xmax+xmin)/2))
+            print(offset)
+            for face in island:    
+                for l in face.loops:
+                    l[bm.loops.layers.uv.active].uv.x += offset
+                    
+        if ymin and ymax > 1.0:
+            #shift back
+            offset = math.floor((ymax+ymin)/2)
+            print(offset)
+            for face in island:    
+                for l in face.loops:
+                    l[bm.loops.layers.uv.active].uv.y -= offset
+        
+        if ymin and ymax < 0.0:
+            #shift back
+            offset = math.floor(-((ymax+ymin)/2))
+            print(offset)
+            for face in island:    
+                for l in face.loops:
+                    l[bm.loops.layers.uv.active].uv.y += offset
+        
+    #deselect
+    for face in bm.faces:
+        face.select = False
+    #reselect original selected faces
+    if objectmode is False:
+        for face in selected_faces:
+            face.select = True
+
+    bmesh.update_edit_mesh(obj.data)
+
+    if objectmode is True:
+        print("switch to object mode")
+        bpy.ops.object.editmode_toggle() 
+
+    return None
 
 
 
@@ -767,7 +925,8 @@ def square_fit(context):
         bpy.ops.uv.select_all(action='DESELECT')
         for v in sorted_vert_list:
             for l in v.link_loops:
-                l[uv_layer].select = True
+                #l[uv_layer].select = True
+                l.uv_select_vert = True 
         bpy.ops.uv.pin(clear=False)
         
         #select all and unwrap (and unpin?)
